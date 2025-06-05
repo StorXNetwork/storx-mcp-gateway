@@ -1,90 +1,180 @@
-StorX MCP Server
-A Model Context Protocol (MCP) server that enables AI models to interact with StorX S3-compatible storage. This server provides a set of tools for managing your StorX storage buckets and objects through AI models like Claude and local LLMs.
+# StorX MCP Gateway
 
-What is MCP?
-The Model Context Protocol (MCP) is an open protocol that standardizes how applications provide context to Large Language Models (LLMs). Think of MCP like a USB-C port for AI applications - it provides a standardized way to connect AI models to different data sources and tools.
+A Model Context Protocol (MCP) server that enables AI models (like Claude and local LLMs) to interact with StorX S3-compatible distributed storage. This server exposes a set of tools for managing your StorX storage buckets (vaults) and objects.
 
-Features
-1. List and manage buckets
-2. Upload, download, and manage objects
-3. Generate signed URLs for secure access
-4. Support for Claude.
-5. Simple configuration through JSON
+---
 
-Prerequisites
-    Node.js 16+
-    Access to an StorX account with:
-        Access Key ID
-        Secret Access Key
-        Endpoint URL
+## What is MCP?
 
-Steps to Install and Run the code 
-1. Clone the repository using the git clone method.
-2. Open the file in the VSCode/any code Editor.
-3. Create a package.json file and add this data into the package.json
-{
-    "name": "storx-mcp-server",
-    "version": "0.1.0",
-    "description": "MCP server for Storx decentralized storage",
-    "type": "module",
-    "main": "index.js",
-    "bin": {
-        "storx-mcp-server": "./index.js"
-    },
-    "scripts": {
-        "start": "node index.js",
-        "dev": "node --inspect index.js"
-    },
-    "dependencies": {
-        "@aws-sdk/client-s3": "^3.654.0",
-        "@modelcontextprotocol/sdk": "^0.4.0",
-        "dotenv": "^16.5.0"
-    },
-    "keywords": [
-        "mcp",
-        "storx",
-        "storage",
-        "decentralized"
-    ],
-    "author": "Storx",
-    "license": "MIT"
-}
+The Model Context Protocol (MCP) is an open protocol that standardizes how applications provide context to Large Language Models (LLMs). Think of MCP like a USB-C port for AI applications—it provides a standardized way to connect AI models to different data sources and tools.
 
-4. Now open the terminal and run the command below to install packages and node modules.
-    npm install
+---
 
-Usage with Claude Desktop
-1. Download and install Claude for Desktop (macOS or Windows)
-2. Open Claude Desktop Settings:
+## Features
 
-    Click on the Claude menu
-    Select "Settings..."
-    Click on "Developer" in the left-hand bar
-    Click on "Edit Config"
-3. This will create/update the configuration file at:
+- List and manage buckets (vaults)
+- Upload, download, and manage objects
+- Create and delete buckets (vaults)
+- Simple configuration through JSON
+- Secure, S3-compatible access to StorX
+- Designed for integration with Claude Desktop and other MCP-compatible clients
 
-        macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
-        Windows: %APPDATA%\Claude\claude_desktop_config.json
-4. Add the StorX MCP server configuration to the file:
-{
-  "mcpServers": {
-    "storx": {
-      "command": "node",
-      "args": ["path\to\index.js"],
-      "env": {
-        "STORX_ACCESS_KEY": "Your_access_Key",
-        "STORX_SECRET_KEY": "Your_secret_key"
-      }
-    }
+---
+
+## Prerequisites
+
+- Node.js 16+
+- Access to a StorX account with:
+  - Access Key ID
+  - Secret Access Key
+
+---
+
+## Installation & Usage
+
+You do **not** need to clone or build this repo. You can run the MCP server directly using `npx`:
+
+```jsonc
+// Example Claude Desktop config (claude_desktop_config.json)
+"storx": {
+  "command": "npx",
+  "args": [
+    "-y",
+    "@storxnetwork/storx-mcp-gateway@latest"
+  ],
+  "env": {
+    "STORX_ACCESS_KEY": "your_access_key_here",
+    "STORX_SECRET_KEY": "your_secret_key_here"
   }
 }
-5. Restart Claude Desktop
-6. You should see a slider icon in the bottom left corner of the input box. Click it to see the available StorX tools.
+```
 
-Now you will be able to :
-1. list_buckets
-2. list_objects
-3. upload_objects
-4. download_object
-5. delete_object
-6. create_bucket
+### 1. With Claude Desktop
+
+1. Download and install Claude for Desktop (macOS or Windows)
+2. Open Claude Desktop Settings:
+    - Click on the Claude menu
+    - Select "Settings..."
+    - Click on "Developer" in the left-hand bar
+    - Click on "Edit Config"
+3. Add the above StorX MCP server configuration to the file:
+    - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+    - Windows: `%APPDATA%\\Claude\\claude_desktop_config.json`
+4. Restart Claude Desktop
+5. You should see a slider icon in the bottom left corner of the input box. Click it to see the available StorX tools.
+
+---
+
+## Available Commands (Tools)
+
+The following tools are available via MCP and can be called by AI models or other MCP clients:
+
+| Tool Name        | Description                                                                 | Required Arguments                | Optional Arguments         |
+|------------------|-----------------------------------------------------------------------------|-----------------------------------|---------------------------|
+| list_buckets     | List all buckets (vaults) in StorX storage                                  | _none_                            | _none_                    |
+| list_objects     | List objects in a specific bucket (vault)                                   | `bucket` (string)                 | `prefix` (string)         |
+| upload_object    | Upload an object to a specific bucket (vault)                               | `bucket`, `key`, `content`        | `contentType` (string)    |
+| download_object  | Download an object from a specific bucket (vault)                           | `bucket`, `key`                   | _none_                    |
+| delete_object    | Delete an object from a specific bucket (vault)                             | `bucket`, `key`                   | _none_                    |
+| create_bucket    | Create a new bucket (vault) in StorX storage                                | `bucket` (string)                 | _none_                    |
+
+### Argument Details
+
+- **bucket**: Name of the bucket/vault/remote storage
+- **key**: Object key/filename or file path
+- **content**: Content to upload (text or bytes)
+- **contentType**: MIME type of the content (default: `text/plain`)
+- **prefix**: Optional prefix to filter objects or file path
+
+---
+
+## Example Usage
+
+### List all vaults
+
+```json
+{
+  "tool": "list_buckets"
+}
+```
+
+### List objects in a vault
+
+```json
+{
+  "tool": "list_objects",
+  "arguments": {
+    "bucket": "my-vault"
+  }
+}
+```
+
+### Upload a file
+
+```json
+{
+  "tool": "upload_object",
+  "arguments": {
+    "bucket": "my-vault",
+    "key": "hello.txt",
+    "content": "Hello, StorX!"
+  }
+}
+```
+
+### Download a file
+
+```json
+{
+  "tool": "download_object",
+  "arguments": {
+    "bucket": "my-vault",
+    "key": "hello.txt"
+  }
+}
+```
+
+### Delete a file
+
+```json
+{
+  "tool": "delete_object",
+  "arguments": {
+    "bucket": "my-vault",
+    "key": "hello.txt"
+  }
+}
+```
+
+### Create a new vault
+
+```json
+{
+  "tool": "create_bucket",
+  "arguments": {
+    "bucket": "new-vault"
+  }
+}
+```
+
+---
+
+## Security
+
+- **Never share your access keys publicly.**
+- Use environment variables or secure config files to store your credentials.
+
+---
+
+## License
+
+MIT
+
+---
+
+If you need more advanced usage or want to run the server locally for development, clone the repo and run:
+
+```sh
+npm install
+npm start
+```
