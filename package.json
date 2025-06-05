@@ -1,20 +1,20 @@
 {
-    "name": "storx-mcp-server",
-    "version": "0.1.0",
+    "name": "@storxnetwork/storx-mcp-gateway",
+    "version": "0.1.1",
     "description": "MCP server for Storx decentralized storage",
     "type": "module",
     "main": "index.js",
     "bin": {
-        "storx-mcp-server": "./index.js"
+        "storx-mcp-gateway": "./index.js"
     },
     "scripts": {
         "start": "node index.js",
-        "dev": "node --inspect index.js"
+        "dev": "node --inspect index.js",
+        "prepublishOnly": "chmod +x index.js"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.654.0",
         "@modelcontextprotocol/sdk": "^0.4.0",
-        "@storxnetwork/storx-mcp-gateway": "^1.0.0",
         "dotenv": "^16.5.0"
     },
     "keywords": [
@@ -24,5 +24,8 @@
         "decentralized"
     ],
     "author": "Storx",
-    "license": "MIT"
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    }
 }

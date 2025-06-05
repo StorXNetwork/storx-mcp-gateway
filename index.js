@@ -57,10 +57,10 @@ function loadConfig() {
     
     // Map environment variables to our expected format
     const config = {
-      accessKey: envConfig.STORX_ACCESS_KEY || envConfig.AWS_ACCESS_KEY_ID,
-      secretKey: envConfig.STORX_SECRET_KEY || envConfig.AWS_SECRET_ACCESS_KEY,
-      endpoint: envConfig.STORX_ENDPOINT || envConfig.AWS_ENDPOINT_URL || 'https://gateway.storx.io',
-      region: envConfig.STORX_REGION || envConfig.AWS_REGION || 'us-east-1'
+      accessKey: envConfig.STORX_ACCESS_KEY || envConfig.AWS_ACCESS_KEY_ID || process.env.STORX_ACCESS_KEY,
+      secretKey: envConfig.STORX_SECRET_KEY || envConfig.AWS_SECRET_ACCESS_KEY || process.env.STORX_SECRET_KEY,
+      endpoint: envConfig.STORX_ENDPOINT || envConfig.AWS_ENDPOINT_URL || process.env.STORX_ENDPOINT || 'https://gateway.storx.io',
+      region: envConfig.STORX_REGION || envConfig.AWS_REGION || process.env.STORX_REGION || 'us-east-1'
     };
     
     // Validate required fields
@@ -68,7 +68,7 @@ function loadConfig() {
     const missing = requiredFields.filter(field => !config[field]);
     
     if (missing.length > 0) {
-      console.error('ERROR: Invalid configuration in claude_desktop_config.json');
+      console.error('env is not set');
       console.error('Missing environment variables for Storx MCP server:');
       missing.forEach(field => {
         const envVarName = field === 'accessKey' ? 'STORX_ACCESS_KEY or AWS_ACCESS_KEY_ID' : 'STORX_SECRET_KEY or AWS_SECRET_ACCESS_KEY';
@@ -78,13 +78,11 @@ function loadConfig() {
       console.error(`{
   "mcpServers": {
     "storx": {
-      "command": "node",
-      "args": ["path/to/your/index.js"],
+      "command": "npx",
+      "args": ["-y", "@storxnetwork/storx-mcp-gateway@latest"],
       "env": {
         "STORX_ACCESS_KEY": "your_access_key_here",
-        "STORX_SECRET_KEY": "your_secret_key_here",
-        "STORX_ENDPOINT": "https://gateway.storx.io",
-        "STORX_REGION": "us-east-1"
+        "STORX_SECRET_KEY": "your_secret_key_here"
       }
     }
   }
@@ -149,7 +147,7 @@ class StorxMCPServer {
       tools: [
         {
           name: "list_buckets",
-          description: "List all buckets in Storx storage",
+          description: "List all buckets or vaults or remote storage or paths in Storx storage",
           inputSchema: {
             type: "object",
             properties: {},
@@ -157,17 +155,17 @@ class StorxMCPServer {
         },
         {
           name: "list_objects",
-          description: "List objects in a specific bucket",
+          description: "List objects in a specific bucket or vault or remote storage or path",
           inputSchema: {
             type: "object",
             properties: {
               bucket: {
                 type: "string",
-                description: "Name of the bucket to list objects from",
+                description: "Name of the bucket or vault or remote storage to list objects from",
               },
               prefix: {
                 type: "string",
-                description: "Optional prefix to filter objects",
+                description: "Optional prefix to filter objects or file path",
               },
             },
             required: ["bucket"],
@@ -175,25 +173,25 @@ class StorxMCPServer {
         },
         {
           name: "upload_object",
-          description: "Upload an object to Storx storage",
+          description: "Upload an object to specific path in Storx storage or bucket or vault or remote storage",
           inputSchema: {
             type: "object",
             properties: {
               bucket: {
                 type: "string",
-                description: "Name of the bucket",
+                description: "Name of the bucket or vault or remote storage",
               },
               key: {
                 type: "string",
-                description: "Object key/filename",
+                description: "Object key/filename or file path",
               },
               content: {
                 type: "string",
-                description: "Content to upload (text)",
+                description: "Content to upload (text) or bytes from any other file or image or video or audio or document or any other file",
               },
               contentType: {
                 type: "string",
-                description: "MIME type of the content",
+                description: "MIME type of the content or file type of the file",
                 default: "text/plain",
               },
             },
@@ -202,17 +200,17 @@ class StorxMCPServer {
         },
         {
           name: "download_object",
-          description: "Download an object from Storx storage",
+          description: "Download an object from Storx storage or vault or remote storage",
           inputSchema: {
             type: "object",
             properties: {
               bucket: {
                 type: "string",
-                description: "Name of the bucket",
+                description: "Name of the bucket or vault or remote storage",
               },
               key: {
                 type: "string",
-                description: "Object key/filename",
+                description: "Object key/filename or file path",
               },
             },
             required: ["bucket", "key"],
@@ -220,17 +218,17 @@ class StorxMCPServer {
         },
         {
           name: "delete_object",
-          description: "Delete an object from Storx storage",
+          description: "Delete an object from Storx storage or vault or remote storage",
           inputSchema: {
             type: "object",
             properties: {
               bucket: {
                 type: "string",
-                description: "Name of the bucket",
+                description: "Name of the bucket or vault or remote storage",
               },
               key: {
                 type: "string",
-                description: "Object key/filename to delete",
+                description: "Object key/filename or file path to delete",
               },
             },
             required: ["bucket", "key"],
@@ -238,13 +236,13 @@ class StorxMCPServer {
         },
         {
           name: "create_bucket",
-          description: "Create a new bucket in Storx storage",
+          description: "Create a new bucket or vault or remote storage in Storx storage",
           inputSchema: {
             type: "object",
             properties: {
               bucket: {
                 type: "string",
-                description: "Name of the bucket to create",
+                description: "Name of the bucket or vault or remote storage to create",
               },
             },
             required: ["bucket"],
